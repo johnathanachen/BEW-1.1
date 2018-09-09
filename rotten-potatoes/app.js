@@ -1,51 +1,36 @@
-const express = require('express')
-const app = express()
-
+const express = require('express');
+const app = express();
+const exphbs = require('express-handlebars');
 const mongoose = require('mongoose');
+const methodOverride = require('method-override');
 const bodyParser = require('body-parser');
-mongoose.connect('mongodb://localhost/rotten-potatoes');
-var exphbs = require('express-handlebars');
+const reviewsController = require('./controllers/reviews.js');
+const commentsController = require('./controllers/comments.js');
+// const moviesController = require('./controllers/movies.js');
+const Review = require('./models/review.js');
+const Comment = require('./models/comment.js');
 
-const Review = mongoose.model('Review', {
-  title: String,
-  description: String,
-  movieTitle: String
-});
-
-app.engine('handlebars', exphbs({defaultLayout: 'main'}));
-app.set('view engine', 'handlebars');
+// MIDDLEWARE
+app.use(methodOverride('_method'));
 app.use(bodyParser.urlencoded({ extended: true }));
 
+
+// Set up Template engine
+app.engine('handlebars', exphbs({defaultLayout: 'main'}));
+app.set('view engine', 'handlebars');
+
+
+// ROUTES
+app.use('/', reviewsController);
+app.use(commentsController);
+// app.use(moviesController);
+
+
+// Mongoose Connection
+mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost/rotten-potatoes');
+
+
+// Server
 app.listen(3000, () => {
   console.log('App listening on port 3000!')
-})
-
-
-app.get('/', (req, res) => {
-  Review.find()
-    .then(reviews => {
-      res.render('reviews-index', { reviews: reviews });
-    })
-    .catch(err => {
-      console.log(err);
-    })
-})
-
-// INDEX
-app.get('/reviews', (req, res) => {
-  res.render('reviews-index', { reviews: reviews });
-})
-
-app.get('/reviews/new', (req, res) => {
-  res.render('reviews-new', {});
-})
-
-// CREATE
-app.post('/reviews', (req, res) => {
-  Review.create(req.body).then((review) => {
-    console.log(review);
-    res.redirect('/');
-  }).catch((err) => {
-    console.log(err.message);
-  })
 })
